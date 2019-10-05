@@ -2,6 +2,8 @@
 
 namespace Spatie\Html;
 
+use DateTimeImmutable;
+use Illuminate\Support\Str;
 use Spatie\Html\Elements\A;
 use Spatie\Html\Elements\I;
 use Illuminate\Http\Request;
@@ -27,6 +29,9 @@ use Illuminate\Contracts\Support\Htmlable;
 class Html
 {
     use Macroable;
+
+    const HTML_DATE_FORMAT = 'Y-m-d';
+    const HTML_TIME_FORMAT = 'H:i:s';
 
     /** @var \Illuminate\Http\Request */
     protected $request;
@@ -70,7 +75,7 @@ class Html
      *
      * @return \Spatie\Html\Elements\Button
      */
-    public function button($contents = null, $type = null, $name = '')
+    public function button($contents = null, $type = null, $name = null)
     {
         return Button::create()
             ->attributeIf($type, 'type', $type)
@@ -104,12 +109,9 @@ class Html
      *
      * @return \Spatie\Html\Elements\Input
      */
-    public function checkbox($name = null, $checked = false, $value = '1')
+    public function checkbox($name = null, $checked = null, $value = '1')
     {
-        return Input::create()
-            ->attribute('type', 'checkbox')
-            ->attributeIf($name, 'name', $this->fieldName($name))
-            ->attributeIf($name, 'id', $this->fieldName($name))
+        return $this->input('checkbox', $name, $value)
             ->attributeIf(! is_null($value), 'value', $value)
             ->attributeIf((bool) $this->old($name, $checked), 'checked');
     }
@@ -130,7 +132,7 @@ class Html
      *
      * @return \Spatie\Html\Elements\Input
      */
-    public function email($name = '', $value = '')
+    public function email($name = null, $value = null)
     {
         return $this->input('email', $name, $value);
     }
@@ -138,23 +140,54 @@ class Html
     /**
      * @param string|null $name
      * @param string|null $value
+     * @param bool $format
      *
      * @return \Spatie\Html\Elements\Input
      */
-    public function date($name = '', $value = '')
+    public function date($name = '', $value = null, $format = true)
     {
-        return $this->input('date', $name, $value);
+        $element = $this->input('date', $name, $value);
+
+        if (! $format || empty($element->getAttribute('value'))) {
+            return $element;
+        }
+
+        return $element->value($this->formatDateTime($element->getAttribute('value'), self::HTML_DATE_FORMAT));
     }
 
     /**
      * @param string|null $name
      * @param string|null $value
+     * @param string|null $min
+     * @param string|null $max
+     * @param string|null $step
      *
      * @return \Spatie\Html\Elements\Input
      */
-    public function time($name = '', $value = '')
+    public function range($name = '', $value = '', $min = null, $max = null, $step = null)
     {
-        return $this->input('time', $name, $value);
+        return $this->input('range', $name, $value)
+            ->attributeIfNotNull($min, 'min', $min)
+            ->attributeIfNotNull($max, 'max', $max)
+            ->attributeIfNotNull($step, 'step', $step);
+    }
+
+    /**
+     * @param string|null $name
+     * @param string|null $value
+     * @param bool $format
+     *
+     * @return \Spatie\Html\Elements\Input
+     */
+    public function time($name = '', $value = null, $format = true)
+    {
+        $element = $this->input('time', $name, $value);
+
+        if (! $format || empty($element->getAttribute('value'))) {
+            return $element;
+        }
+
+        return $element->value($this->formatDateTime($element->getAttribute('value'), self::HTML_TIME_FORMAT));
     }
 
     /**
@@ -176,7 +209,7 @@ class Html
      */
     public function input($type = null, $name = null, $value = null)
     {
-        $hasValue = $name && (! is_null($this->old($name, $value)) || ! is_null($value));
+        $hasValue = $name && ($type !== 'password' && ! is_null($this->old($name, $value)) || ! is_null($value));
 
         return Input::create()
             ->attributeIf($type, 'type', $type)
@@ -193,8 +226,7 @@ class Html
     public function fieldset($legend = null)
     {
         return $legend ?
-            Fieldset::create()->legend($legend) :
-            Fieldset::create();
+            Fieldset::create()->legend($legend) : Fieldset::create();
     }
 
     /**
@@ -279,7 +311,7 @@ class Html
      */
     public function mailto($email, $text = null)
     {
-        return $this->a('mailto:'.$email, $text);
+        return $this->a('mailto:'.$email, $text ?: $email);
     }
 
     /**
@@ -297,6 +329,23 @@ class Html
             ->options($options)
             ->value($name ? $this->old($name, $value) : $value)
             ->multiple();
+    }
+
+    /**
+     * @param string|null $name
+     * @param string|null $value
+     * @param string|null $min
+     * @param string|null $max
+     * @param string|null $step
+     *
+     * @return \Spatie\Html\Elements\Input
+     */
+    public function number($name = null, $value = null, $min = null, $max = null, $step = null)
+    {
+        return $this->input('number', $name, $value)
+                ->attributeIfNotNull($min, 'min', $min)
+                ->attributeIfNotNull($max, 'max', $max)
+                ->attributeIfNotNull($step, 'step', $step);
     }
 
     /**
@@ -331,10 +380,11 @@ class Html
      *
      * @return \Spatie\Html\Elements\Input
      */
-    public function radio($name = null, $checked = false, $value = null)
+    public function radio($name = null, $checked = null, $value = null)
     {
         return $this->input('radio', $name, $value)
-            ->attributeIf($name, 'id', $value === null ? $name : ($name.'_'.str_slug($value)))
+            ->attributeIf($name, 'id', $value === null ? $name : ($name.'_'.Str::slug($value)))
+            ->attributeIf(! is_null($value), 'value', $value)
             ->attributeIf((! is_null($value) && $this->old($name) == $value) || $checked, 'checked');
     }
 
@@ -392,7 +442,7 @@ class Html
      */
     public function tel($number, $text = null)
     {
-        return $this->a('tel:'.$number, $text);
+        return $this->a('tel:'.$number, $text ?: $number);
     }
 
     /**
@@ -504,9 +554,10 @@ class Html
         // Convert array format (sth[1]) to dot notation (sth.1)
         $name = preg_replace('/\[(.+)\]/U', '.$1', $name);
 
-        // If there's no default value provided, and the html builder currently
-        // has a model assigned, try to retrieve a value from the model.
-        if (empty($value) && $this->model) {
+        // If there's no default value provided, the html builder currently
+        // has a model assigned and there aren't old input items,
+        // try to retrieve a value from the model.
+        if (is_null($value) && $this->model && empty($this->request->old())) {
             $value = data_get($this->model, $name) ?? '';
         }
 
@@ -541,6 +592,26 @@ class Html
     {
         if (empty($this->model)) {
             throw new Exception('Method requires a model to be set on the html builder');
+        }
+    }
+
+    /**
+     * @param string $value
+     * @param string $format DateTime formatting string supported by date_format()
+     * @return string
+     */
+    protected function formatDateTime($value, $format)
+    {
+        if (empty($value)) {
+            return $value;
+        }
+
+        try {
+            $date = new DateTimeImmutable($value);
+
+            return $date->format($format);
+        } catch (\Exception $e) {
+            return $value;
         }
     }
 }

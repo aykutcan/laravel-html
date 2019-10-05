@@ -3,6 +3,7 @@
 namespace Spatie\Html;
 
 use BadMethodCallException;
+use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Spatie\Html\Exceptions\MissingTag;
@@ -163,7 +164,7 @@ abstract class BaseElement implements Htmlable, HtmlElement
      *
      * @return static
      */
-    public function data($name, $value)
+    public function data($name, $value = null)
     {
         return $this->attribute("data-{$name}", $value);
     }
@@ -300,19 +301,45 @@ abstract class BaseElement implements Htmlable, HtmlElement
     }
 
     /**
-     * Condintionally transform the element. Note that since elements are
+     * Conditionally transform the element. Note that since elements are
      * immutable, you'll need to return a new instance from the callback.
      *
      * @param bool $condition
-     * @param callable $callback
+     * @param \Closure $callback
+     *
+     * @return mixed
      */
-    public function if(bool $condition, callable $callback)
+    public function if(bool $condition, \Closure $callback)
     {
-        if ($condition) {
-            return $callback($this);
-        }
+        return $condition ? $callback($this) : $this;
+    }
 
-        return $this;
+    /**
+     * Conditionally transform the element. Note that since elements are
+     * immutable, you'll need to return a new instance from the callback.
+     *
+     * @param bool $condition
+     * @param \Closure $callback
+     *
+     * @return mixed
+     */
+    public function unless(bool $condition, \Closure $callback)
+    {
+        return $this->if(! $condition, $callback);
+    }
+
+    /**
+     * Conditionally transform the element. Note that since elements are
+     * immutable, you'll need to return a new instance from the callback.
+     *
+     * @param mixed $value
+     * @param \Closure $callback
+     *
+     * @return mixed
+     */
+    public function ifNotNull($value, \Closure $callback)
+    {
+        return ! is_null($value) ? $callback($this) : $this;
     }
 
     /**
@@ -378,28 +405,44 @@ abstract class BaseElement implements Htmlable, HtmlElement
      * Dynamically handle calls to the class.
      * Check for methods finishing by If or fallback to Macroable.
      *
-     * @param  string  $method
-     * @param  array   $parameters
+     * @param  string  $name
+     * @param  array   $arguments
      * @return mixed
      *
      * @throws BadMethodCallException
      */
     public function __call($name, $arguments)
     {
-        if (ends_with($name, 'If')) {
-            $name = str_replace('If', '', $name);
-            if (! method_exists($this, $name)) {
-                throw new BadMethodCallException("$name is not a valid method for this class");
+        if (Str::endsWith($name, $conditions = ['If', 'Unless', 'IfNotNull'])) {
+            foreach ($conditions as $condition) {
+                if (! method_exists($this, $method = str_replace($condition, '', $name))) {
+                    continue;
+                }
+
+                return $this->callConditionalMethod($condition, $method, $arguments);
             }
-
-            $condition = (bool) array_shift($arguments);
-
-            return $condition ?
-                $this->{$name}(...$arguments) :
-                $this;
         }
 
         return $this->__macro_call($name, $arguments);
+    }
+
+    protected function callConditionalMethod($type, $method, array $arguments)
+    {
+        $value = array_shift($arguments);
+        $callback = function () use ($method, $arguments) {
+            return $this->{$method}(...$arguments);
+        };
+
+        switch ($type) {
+            case 'If':
+                return $this->if((bool) $value, $callback);
+            case 'Unless':
+                return $this->unless((bool) $value, $callback);
+            case 'IfNotNull':
+                return $this->ifNotNull($value, $callback);
+            default:
+                return $this;
+        }
     }
 
     public function __clone()

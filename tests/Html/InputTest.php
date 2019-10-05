@@ -114,11 +114,168 @@ class InputTest extends TestCase
     }
 
     /** @test */
+    public function it_can_create_a_date_input_with_blank_date()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input id="test_date" name="test_date" type="date" value=""/>',
+            $this->html->date('test_date', '')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_date_input_and_format_date()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input id="test_date" name="test_date" type="date" value="2017-09-04"/>',
+            $this->html->date('test_date', '2017-09-04T23:33:32')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_date_input_and_format_model_date()
+    {
+        $this->html->model(['test_date' => '2017-09-04T23:33:32']);
+
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input id="test_date" name="test_date" type="date" value="2017-09-04"/>',
+            $this->html->date('test_date')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_date_input_with_invalid_date()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input id="test_date" name="test_date" type="date" value="notadate"/>',
+            $this->html->date('test_date', 'notadate')
+        );
+    }
+
+    /** @test */
     public function it_can_create_a_time_input()
     {
         $this->assertHtmlStringEqualsHtmlString(
                 '<input type="time">',
                 $this->html->time()
             );
+    }
+
+    /** @test */
+    public function it_can_create_a_time_input_with_blank_value()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input id="test_time" name="test_time" type="time" value=""/>',
+            $this->html->time('test_time', '')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_time_input_with_time_string_and_format()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input id="test_time" name="test_time" type="time" value="11:30:00"/>',
+            $this->html->time('test_time', '11:30')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_time_input_with_string_and_format()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input id="test_time" name="test_time" type="time" value="23:33:32"/>',
+            $this->html->time('test_time', '2017-09-04T23:33:32')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_time_input_with_invalid_time()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input id="test_time" name="test_time" type="time" value="timeoclock"/>',
+            $this->html->time('test_time', 'timeoclock')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_time_input_with_model_time()
+    {
+        $this->html->model(['time' => '2017-09-04T23:33:32']);
+
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input id="time" name="time" type="time" value="23:33:32"/>',
+            $this->html->time('time')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_range_input()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input type="range">',
+            $this->html->range()
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_range_input_with_min_max()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input type="range" name="test" id="test" value="0" min="0" max="100">',
+            $this->html->range('test', '0', '0', '100')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_range_input_with_min_max_step()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input type="range" name="test" id="test" value="0" min="0" max="100" step="10">',
+            $this->html->range('test', '0', '0', '100', '10')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_range_input_with_max_step()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input type="range" name="test" id="test" value="30" max="100" step="10">',
+            $this->html->range('test', '30', null, '100', '10')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_number_input()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input type="number">',
+            $this->html->number()
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_number_input_with_min_max()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input type="number" name="test" id="test" value="0" min="0" max="100">',
+            $this->html->number('test', '0', '0', '100')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_number_input_with_min_max_step()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input type="number" name="test" id="test" value="0" min="0" max="100" step="10">',
+            $this->html->number('test', '0', '0', '100', '10')
+        );
+    }
+
+    /** @test */
+    public function it_can_create_a_number_input_with_max_step()
+    {
+        $this->assertHtmlStringEqualsHtmlString(
+            '<input type="number" name="test" id="test" value="30" max="100" step="10">',
+            $this->html->number('test', '30', null, '100', '10')
+        );
     }
 }

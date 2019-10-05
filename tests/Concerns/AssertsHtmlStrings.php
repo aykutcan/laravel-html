@@ -8,14 +8,25 @@ trait AssertsHtmlStrings
 {
     protected function assertHtmlStringEqualsHtmlString(string $expectedHtml, string $actualHtml)
     {
-        $this->assertEquals(
-            $this->convertToDomDocument($expectedHtml),
-            $this->convertToDomDocument($actualHtml),
-            '',
-            0.0,
-            10,
-            true
-        );
+        if (method_exists($this, 'assertEqualsCanonicalizing')) {
+            $this->assertEqualsCanonicalizing(
+                $this->convertToDomDocument($expectedHtml),
+                $this->convertToDomDocument($actualHtml),
+                '',
+                0.0,
+                10
+            );
+        } else {
+            // Support PHPUnit
+            $this->assertEquals(
+                $this->convertToDomDocument($expectedHtml),
+                $this->convertToDomDocument($actualHtml),
+                '',
+                0.0,
+                10,
+                true
+            );
+        }
     }
 
     protected function convertToDomDocument(string $html): DOMDocument

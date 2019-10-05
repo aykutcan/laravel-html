@@ -21,11 +21,18 @@ abstract class TestCase extends \Spatie\Html\Test\TestCase
     /** @var \Spatie\Html\Html $html */
     protected $html;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
         $this->request = Mockery::mock(Request::class);
+
+        $this->request
+            ->shouldReceive('old')
+            ->withNoArgs()
+            ->andReturnUsing(function () {
+                return $this->session;
+            });
 
         $this->request
             ->shouldReceive('old')
@@ -59,7 +66,7 @@ abstract class TestCase extends \Spatie\Html\Test\TestCase
         return $this;
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         Mockery::close();
     }

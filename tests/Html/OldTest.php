@@ -2,6 +2,8 @@
 
 namespace Spatie\Html\Test\Html;
 
+use Illuminate\Support\Arr;
+
 class OldTest extends TestCase
 {
     /** @test */
@@ -48,6 +50,31 @@ class OldTest extends TestCase
     }
 
     /** @test */
+    public function it_returns_specified_value_even_if_a_model_value_its_available_in_the_model()
+    {
+        $this
+            ->withModel(['name' => 'Sebastian'])
+            ->assertHtmlStringEqualsHtmlString(
+                '<input type="text" name="name" id="name" value="Freek">',
+                $this->html->text('name', 'Freek')
+            );
+
+        $this
+            ->withModel(['name' => 1])
+            ->assertHtmlStringEqualsHtmlString(
+                '<input type="text" name="name" id="name" value="0">',
+                $this->html->text('name', 0)
+            );
+
+        $this
+            ->withModel(['name' => true])
+            ->assertHtmlStringEqualsHtmlString(
+                '<input type="checkbox" name="name" id="name" value="1">',
+                $this->html->checkbox('name', false)
+            );
+    }
+
+    /** @test */
     public function it_returns_a_session_value_if_its_available_in_the_model_and_the_session()
     {
         $this
@@ -63,7 +90,7 @@ class OldTest extends TestCase
     public function it_returns_a_session_value_from_a_name_with_an_array()
     {
         $this
-            ->withSession(array_dot(['name' => [1 => ['a' => 'Sebastian']]]))
+            ->withSession(Arr::dot(['name' => [1 => ['a' => 'Sebastian']]]))
             ->assertHtmlStringEqualsHtmlString(
                 '<input type="text" name="name[1][a]" id="name[1][a]" value="Sebastian">',
                 $this->html->text('name[1][a]')
@@ -114,6 +141,19 @@ class OldTest extends TestCase
                 '<input type="number" name="relation[order][number]" id="relation[order][number]" value="0">',
                 $this->html->input('number', 'relation[order][number]')
             );
+
+        $this
+            ->withModel(['name' => ['option_1' => '1']])
+            ->assertHtmlStringEqualsHtmlString(
+                '<div>'.
+                    '<input type="checkbox" name="name[option_1]" id="name[option_1]" value="1" checked="checked">'.
+                    '<input type="checkbox" name="name[option_2]" id="name[option_2]" value="1">'.
+                '</div>',
+                $this->html->div([
+                    $this->html->checkbox('name[option_1]'),
+                    $this->html->checkbox('name[option_2]'),
+                ])
+            );
     }
 
     /** @test */
@@ -121,10 +161,42 @@ class OldTest extends TestCase
     {
         $this
             ->withModel(['relation' => ['name' => ['first_name' => 'Freek']]])
-            ->withSession(array_dot(['relation' => ['name' => ['first_name' => 'Sebastian']]]))
+            ->withSession(Arr::dot(['relation' => ['name' => ['first_name' => 'Sebastian']]]))
             ->assertHtmlStringEqualsHtmlString(
                 '<input type="text" name="relation[name][first_name]" id="relation[name][first_name]" value="Sebastian">',
                 $this->html->text('relation[name][first_name]')
+            );
+
+        $this
+            ->withModel(['name' => ['option_1' => '1']])
+            ->withSession(Arr::dot(['name' => ['option_2' => '1']]))
+            ->assertHtmlStringEqualsHtmlString(
+                '<div>'.
+                    '<input type="checkbox" name="name[option_1]" id="name[option_1]" value="1">'.
+                    '<input type="checkbox" name="name[option_2]" id="name[option_2]" value="1" checked="checked">'.
+                '</div>',
+                $this->html->div([
+                    $this->html->checkbox('name[option_1]'),
+                    $this->html->checkbox('name[option_2]'),
+                ])
+            );
+    }
+
+    /** @test */
+    public function it_returns_a_empty_value_if_its_a_password_field()
+    {
+        $this
+            ->withModel(['password' => 'abc'])
+            ->assertHtmlStringEqualsHtmlString(
+                '<input type="password" name="password" id="password">',
+                $this->html->password('password')
+            );
+
+        $this
+            ->withModel(['secret' => 'abc'])
+            ->assertHtmlStringEqualsHtmlString(
+                '<input type="password" name="secret" id="secret">',
+                $this->html->password('secret')
             );
     }
 }

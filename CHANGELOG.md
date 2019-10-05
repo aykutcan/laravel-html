@@ -2,6 +2,46 @@
 
 All notable changes to `laravel-html` will be documented in this file.
 
+## 2.24.0 - 2019-09-04
+
+- Added number input
+
+## 2.23.0 - 2019-09-04
+
+- Laravel 6 support
+- Better handling for `0` values in inputs
+- Add `range` for range inputs
+- Format date and time values
+
+## 2.22.1 - 2019-07-16
+
+- Prevent password fields to be filled
+
+## 2.22.0 - 2019-04-26
+- Changed the `value` parameter in `data` to an optional parameter
+
+## 2.21.0 - 2019-02-27
+- Added Laravel 5.8 support
+- Dropped PHP 7.0 support
+- Dropped Laravel 5.4 support
+- Dropped PHPUnit 6 support
+
+## 2.20.1 - 2019-02-01
+
+- use `Arr::` and `Str::` functions
+
+## 2.20.0 - 2019-01-18
+- Added `unless` method and magic `__call` handler (e.g. `$input->valueUnless(false, 5)`)
+- Added `size` attribute method to `Input`
+- Added `name` attribute method to `Button`
+- Fixed checkbox value repopulation after request
+
+## 2.19.9 - 2019-01-10
+- Improve default of `tel` link
+
+## 2.19.8 - 2018-09-04
+- Add support for Laravel 5.7
+
 ## 2.19.7 - 2018-04-30
 - Allow radio input check "0" value
 
